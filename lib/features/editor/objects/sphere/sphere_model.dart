@@ -1,41 +1,30 @@
-import 'package:flutter/material.dart';
 import '../../models/diagram_object.dart';
+import 'sphere_constraints.dart';
 
 class SphereModel extends DiagramObject {
   SphereModel({
+    required super.id,
     required super.x,
     required super.y,
-    required super.width,
-  }) : super(height: width);
+    required double radius,
+  })  : super(
+          type: DiagramObjectType.sphere,
+          width: radius * 2,
+          height: radius * 2,
+        );
 
   @override
-  bool get canRotate => false;
+  bool get canRotate => SphereConstraints.canRotate;
 
   @override
-  bool get canFlipX => false;
+  bool get canFlipX => SphereConstraints.canFlipX;
+
+  double get radius => width / 2;
 
   @override
   void resize(double dx, double dy) {
-    width = (width + dx).clamp(50, 1000);
-
-    height = width;
-  }
-
-  @override
-  Widget render({
-    required bool selected,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.purple.withOpacity(.2),
-        border: Border.all(
-          color: selected
-              ? Colors.orange
-              : Colors.purple,
-          width: 3,
-        ),
-      ),
-    );
+    final newRadius = (radius + (dx + dy) / 4).clamp(20.0, 1000.0);
+    width = newRadius * 2;
+    height = newRadius * 2;
   }
 }

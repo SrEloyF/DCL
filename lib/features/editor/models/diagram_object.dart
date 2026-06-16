@@ -1,25 +1,34 @@
-import 'package:flutter/material.dart';
+import 'dart:math';
+import 'dart:ui';
+
+enum DiagramObjectType { block, ramp, sphere }
 
 abstract class DiagramObject {
-  double x;
-  double y;
-
-  double width;
-  double height;
-
-  double angle;
-
   DiagramObject({
+    required this.id,
+    required this.type,
     required this.x,
     required this.y,
     required this.width,
     required this.height,
-    this.angle = 0,
+    this.angle = 0.0,
   });
 
-  bool get canRotate;
+  final String id;
+  final DiagramObjectType type;
 
+  double x;
+  double y;
+  double width;
+  double height;
+  double angle;
+
+  bool get canRotate;
   bool get canFlipX;
+
+  Rect get bounds => Rect.fromLTWH(x, y, width, height);
+
+  Offset get center => Offset(x + width / 2, y + height / 2);
 
   void move(double dx, double dy) {
     x += dx;
@@ -27,19 +36,16 @@ abstract class DiagramObject {
   }
 
   void resize(double dx, double dy) {
-    width = (width + dx).clamp(50, 1000);
-    height = (height + dy).clamp(50, 1000);
+    width = max(40.0, width + dx);
+    height = max(40.0, height + dy);
   }
 
   void rotate(double deltaAngle) {
     if (!canRotate) return;
-
     angle += deltaAngle;
   }
 
   void flipX() {}
 
-  Widget render({
-    required bool selected,
-  });
+  bool containsWorldPoint(Offset point) => bounds.contains(point);
 }
