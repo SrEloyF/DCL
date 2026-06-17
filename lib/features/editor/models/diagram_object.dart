@@ -1,5 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
+import '../../../core/constants/scene_constants.dart';
+import 'handle_model.dart';
 
 enum DiagramObjectType { block, ramp, sphere }
 
@@ -26,6 +28,8 @@ abstract class DiagramObject {
   bool get canRotate;
   bool get canFlipX;
 
+  List<HandleModel> get handles;
+
   Rect get bounds => Rect.fromLTWH(x, y, width, height);
 
   Offset get center => Offset(x + width / 2, y + height / 2);
@@ -35,9 +39,39 @@ abstract class DiagramObject {
     y += dy;
   }
 
-  void resize(double dx, double dy) {
-    width = max(40.0, width + dx);
-    height = max(40.0, height + dy);
+  void applyBounds(Rect newBounds) {
+    x = newBounds.left;
+    y = newBounds.top;
+    width = max(SceneConstants.objectMinSize, newBounds.width);
+    height = max(SceneConstants.objectMinSize, newBounds.height);
+  }
+
+  Rect transformResize(HandleAnchor anchor, Offset delta) {
+    double nextX = x;
+    double nextY = y;
+    double nextWidth = width;
+    double nextHeight = height;
+
+    switch (anchor) {
+      case HandleAnchor.left:
+        nextX += delta.dx;
+        nextWidth -= delta.dx;
+        break;
+      case HandleAnchor.right:
+        nextWidth += delta.dx;
+        break;
+      case HandleAnchor.top:
+        nextY += delta.dy;
+        nextHeight -= delta.dy;
+        break;
+      case HandleAnchor.bottom:
+        nextHeight += delta.dy;
+        break;
+      default:
+        break;
+    }
+
+    return Rect.fromLTWH(nextX, nextY, nextWidth, nextHeight);
   }
 
   void rotate(double deltaAngle) {

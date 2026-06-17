@@ -6,21 +6,26 @@ import '../../core/constants/scene_constants.dart';
 import '../../core/utils/id_generator.dart';
 import 'editor_state.dart';
 import 'models/diagram_object.dart';
+import 'models/handle_model.dart';
 import 'models/scene_model.dart';
 import 'objects/block/block_model.dart';
 import 'objects/ramp/ramp_model.dart';
 import 'objects/sphere/sphere_model.dart';
+import 'services/scene_constraint_service.dart';
 
 class EditorController extends ChangeNotifier {
+
+  final SceneConstraintService _constraints = const SceneConstraintService();
+
   EditorController()
-      : state = EditorState(
-          scene: const SceneModel(
-            worldSize: SceneConstants.worldSize,
-            groundY: SceneConstants.groundY,
-            gridStep: SceneConstants.gridStep,
-          ),
-          objects: <DiagramObject>[],
-        );
+    : state = EditorState(
+        scene: const SceneModel(
+          worldSize: SceneConstants.worldSize,
+          groundY: SceneConstants.groundY,
+          gridStep: SceneConstants.gridStep,
+        ),
+        objects: <DiagramObject>[],
+      );
 
   final EditorState state;
   final IdGenerator _ids = IdGenerator();
@@ -81,14 +86,38 @@ class EditorController extends ChangeNotifier {
   }
 
   void moveObject(DiagramObject object, Offset delta) {
+    final nextPosition = Offset(object.x + delta.dx, object.y + delta.dy);
+
+    final allowed = _constraints.canMove(
+      object: object,
+      nextPosition: nextPosition,
+      scene: state.scene,
+      objects: objects,
+    );
+
+    if (!allowed) return;
+
     object.move(delta.dx, delta.dy);
-    _clampToScene(object);
+
     notifyListeners();
   }
 
   void resizeObject(DiagramObject object, Offset delta) {
-    object.resize(delta.dx, delta.dy);
-    _clampToScene(object);
+    final candidateBounds = object.transformResize(HandleAnchor.bottom, delta);
+    updateObjectBounds(object, candidateBounds);
+  }
+
+  void updateObjectBounds(DiagramObject object, Rect newBounds) {
+    final allowed = _constraints.canResize(
+      object: object,
+      candidateBounds: newBounds,
+      scene: state.scene,
+      objects: objects,
+    );
+
+    if (!allowed) return;
+
+    object.applyBounds(newBounds);
     notifyListeners();
   }
 
@@ -103,13 +132,13 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _clampToScene(DiagramObject object) {
+  /*void _clampToScene(DiagramObject object) {
     final maxX = state.worldSize.width - object.width;
     final maxY = state.groundY - object.height;
 
     object.x = object.x.clamp(0.0, maxX);
     object.y = object.y.clamp(0.0, maxY);
-  }
+  }*/
 
   void setObjectAngle(DiagramObject object, double angle) {
     object.angle = angle;

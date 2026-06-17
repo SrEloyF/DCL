@@ -1,4 +1,5 @@
 import '../../models/diagram_object.dart';
+import '../../models/handle_model.dart';
 import 'ramp_constraints.dart';
 
 class RampModel extends DiagramObject {
@@ -22,4 +23,15 @@ class RampModel extends DiagramObject {
   void flipX() {
     mirrored = !mirrored;
   }
+
+  @override
+  List<HandleModel> get handles => [
+        const HandleModel(type: HandleType.resize, anchor: HandleAnchor.bottom),
+        HandleModel(
+          type: HandleType.resize,
+          anchor: mirrored ? HandleAnchor.left : HandleAnchor.right,
+        ),
+        if (canFlipX)
+          const HandleModel(type: HandleType.flip, anchor: HandleAnchor.topRight),
+      ];
 }

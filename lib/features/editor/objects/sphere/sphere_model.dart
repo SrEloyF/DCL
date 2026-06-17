@@ -1,4 +1,7 @@
+import 'dart:math';
+import 'dart:ui';
 import '../../models/diagram_object.dart';
+import '../../models/handle_model.dart';
 import 'sphere_constraints.dart';
 
 class SphereModel extends DiagramObject {
@@ -22,9 +25,24 @@ class SphereModel extends DiagramObject {
   double get radius => width / 2;
 
   @override
-  void resize(double dx, double dy) {
-    final newRadius = (radius + (dx + dy) / 4).clamp(20.0, 1000.0);
-    width = newRadius * 2;
-    height = newRadius * 2;
+  List<HandleModel> get handles => [
+        const HandleModel(type: HandleType.resize, anchor: HandleAnchor.right),
+      ];
+
+  @override
+  void applyBounds(Rect newBounds) {
+    // Ensure the sphere stays square based on the largest dimension
+    final size = max(newBounds.width, newBounds.height);
+    super.applyBounds(Rect.fromLTWH(newBounds.left, newBounds.top, size, size));
+  }
+
+  @override
+  Rect transformResize(HandleAnchor anchor, Offset delta) {
+    // For spheres, we only support uniform resizing from the 'right' handle as per requirements
+    // but InteractionCalculator will interpret this to maintain aspect ratio.
+    // However, we can also handle it here for extra safety.
+    final change = delta.dx + delta.dy;
+    final nextSize = max(40.0, width + change);
+    return Rect.fromLTWH(x, y, nextSize, nextSize);
   }
 }

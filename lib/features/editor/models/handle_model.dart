@@ -1,20 +1,25 @@
-import 'package:flutter/material.dart';
-
 enum HandleType {
-  move,
   resize,
   rotate,
   flip,
 }
 
+enum HandleAnchor {
+  top,
+  bottom,
+  left,
+  right,
+  topCenter,
+  topRight,
+  center,
+}
+
 class HandleModel {
   const HandleModel({
     required this.type,
-    required this.color,
-    required this.alignment,
+    required this.anchor,
   });
 
   final HandleType type;
-  final Color color;
-  final Alignment alignment;
+  final HandleAnchor anchor;
 }

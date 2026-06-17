@@ -39,8 +39,7 @@ The project follows a feature-driven architecture, with the main editor logic lo
 ## Development Conventions
 
 ### Coding Style
-- Follow the official [Dart Style Guide](https://dart.dev/guides/language/analysis-options).
-- Use `flutter_lints` for static analysis (configured in `analysis_options.yaml`).
+- Always write scalable code; if you are going to add new functionality, try to extend existing behavior through new abstractions or components, rather than continually modifying code that already has a defined responsibility.
 - Prefer composition over deep inheritance where possible.
 
 ### Testing

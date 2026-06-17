@@ -2,7 +2,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../core/constants/scene_constants.dart';
 import '../editor_controller.dart';
+import '../interactions/interaction_calculator.dart';
 import '../models/diagram_object.dart';
+import '../models/handle_model.dart';
 import '../objects/block/block_model.dart';
 import '../objects/block/block_painter.dart';
 import '../objects/ramp/ramp_model.dart';
@@ -10,6 +12,7 @@ import '../objects/ramp/ramp_painter.dart';
 import '../objects/sphere/sphere_model.dart';
 import '../objects/sphere/sphere_painter.dart';
 import 'handle_widget.dart';
+import 'helpers/handle_position_calculator.dart';
 
 class ObjectOverlay extends StatefulWidget {
   const ObjectOverlay({
@@ -76,80 +79,63 @@ class _ObjectOverlayState extends State<ObjectOverlay> {
                   child: _buildObjectBody(object, isSelected),
                 ),
               ),
-              if (isSelected) ...[
-                Positioned(
-                  right: -22,
-                  bottom: -22,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onPanUpdate: (details) {
-                      widget.controller.resizeObject(object, details.delta);
-                    },
-                    child: const SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: Center(child: HandleWidget(color: Colors.red)),
-                    ),
-                  ),
-                ),
-                if (object.canRotate)
-                  Positioned(
-                    top: -28,
-                    left: (object.width / 2) - 22,
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onPanStart: (details) {
-                        final center = object.center;
-
-                        _initialTouchAngle = atan2(
-                          details.globalPosition.dy - center.dy,
-                          details.globalPosition.dx - center.dx,
-                        );
-                        _initialAngle = object.angle;
-                      },
-                      onPanUpdate: (details) {
-                        final center = object.center;
-
-                        final currentTouchAngle = atan2(
-                          details.globalPosition.dy - center.dy,
-                          details.globalPosition.dx - center.dx,
-                        );
-
-                        widget.controller.setObjectAngle(
-                          object,
-                          _initialAngle +
-                              (currentTouchAngle - _initialTouchAngle),
-                        );
-                      },
-                      child: const SizedBox(
-                        width: 44,
-                        height: 44,
-                        child: Center(child: HandleWidget(color: Colors.green)),
-                      ),
-                    ),
-                  ),
-                if (object.canFlipX)
-                  Positioned(
-                    top: -28,
-                    right: -22,
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () {
-                        widget.controller.flipObject(object);
-                      },
-                      child: const SizedBox(
-                        width: 44,
-                        height: 44,
-                        child: Center(
-                          child: HandleWidget(color: Colors.orange),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
+              if (isSelected) ...object.handles.map((h) => _buildHandle(h)),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildHandle(HandleModel handle) {
+    final object = widget.object;
+    final position = HandlePositionCalculator.getHandlePosition(handle, object);
+
+    return Positioned(
+      left: position.dx + _padding - 12, // Center the 24px handle
+      top: position.dy + _padding - 12,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onPanStart: handle.type == HandleType.rotate
+            ? (details) {
+                _initialTouchAngle = InteractionCalculator.calculateRotation(
+                  object,
+                  details.globalPosition,
+                );
+                _initialAngle = object.angle;
+              }
+            : null,
+        onPanUpdate: (details) {
+          switch (handle.type) {
+            case HandleType.resize:
+              final candidateBounds = InteractionCalculator.calculateResize(
+                object,
+                handle.anchor,
+                details.delta,
+              );
+              widget.controller.updateObjectBounds(object, candidateBounds);
+              break;
+            case HandleType.rotate:
+              final currentTouchAngle = InteractionCalculator.calculateRotation(
+                object,
+                details.globalPosition,
+              );
+              widget.controller.setObjectAngle(
+                object,
+                _initialAngle + (currentTouchAngle - _initialTouchAngle),
+              );
+              break;
+            case HandleType.flip:
+              // Flip usually handled on tap, but we can support pan if needed
+              break;
+          }
+        },
+        onTap: handle.type == HandleType.flip
+            ? () {
+                widget.controller.flipObject(object);
+              }
+            : null,
+        child: HandleWidget(type: handle.type, anchor: handle.anchor),
       ),
     );
   }
