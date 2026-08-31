@@ -18,4 +18,11 @@ class CameraModel {
       offset: offset ?? this.offset,
     );
   }
+
+  Offset screenToWorld(Offset screenPoint) {
+    return Offset(
+      (screenPoint.dx - offset.dx) / scale,
+      (screenPoint.dy - offset.dy) / scale,
+    );
+  }
 }

@@ -39,17 +39,31 @@ class _EditorScreenState extends State<EditorScreen> {
                 child: EditorViewport(controller: controller),
               ),
 
-              if (selected != null && selected.canFlipX)
+              if (selected != null)
                 Positioned(
                   top: 48,
                   right: 16,
                   child: SafeArea(
-                    child: FloatingActionButton(
-                      backgroundColor: Colors.white,
-                      onPressed: () {
-                        controller.flipObject(selected);
-                      },
-                      child: const Icon(Icons.flip, color: Colors.black),
+                    child: Column(
+                      children: [
+                        FloatingActionButton(
+                          heroTag: 'delete_btn',
+                          backgroundColor: Colors.white,
+                          onPressed: controller.deleteSelected,
+                          child: const Icon(Icons.delete_outline, color: Colors.red),
+                        ),
+                        if (selected.canFlipX) ...[
+                          const SizedBox(height: 12),
+                          FloatingActionButton(
+                            heroTag: 'flip_btn',
+                            backgroundColor: Colors.white,
+                            onPressed: () {
+                              controller.flipObject(selected);
+                            },
+                            child: const Icon(Icons.flip, color: Colors.black),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ),

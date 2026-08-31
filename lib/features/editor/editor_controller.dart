@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
+import 'package:prueba/features/editor/models/camera_model.dart';
 
 import '../../core/constants/scene_constants.dart';
 import '../../core/utils/id_generator.dart';
@@ -11,6 +12,7 @@ import 'models/scene_model.dart';
 import 'objects/block/block_model.dart';
 import 'objects/ramp/ramp_model.dart';
 import 'objects/sphere/sphere_model.dart';
+import 'services/object_spawn_service.dart';
 import 'services/scene_constraint_service.dart';
 
 class EditorController extends ChangeNotifier {
@@ -30,8 +32,18 @@ class EditorController extends ChangeNotifier {
   final EditorState state;
   final IdGenerator _ids = IdGenerator();
 
+  Size _viewportSize = Size.zero;
+
   DiagramObject? get selectedObject => state.selectedObject;
   List<DiagramObject> get objects => state.objects;
+
+  void updateViewportSize(Size size) {
+    _viewportSize = size;
+  }
+
+  void updateCamera(Offset offset, double scale) {
+    state.camera = CameraModel(offset: offset, scale: scale);
+  }
 
   bool get canFlipSelected => state.selectedObject?.canFlipX ?? false;
   bool get canRotateSelected => state.selectedObject?.canRotate ?? false;
@@ -47,41 +59,63 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addBlock() {
-    final object = BlockModel(
-      id: _ids.next('block'),
-      x: 250,
-      y: state.groundY - 180,
-      width: 180,
-      height: 160,
+  void addObject(DiagramObject object) {
+    final pos = ObjectSpawnService.findSpawnPosition(
+      viewportSize: _viewportSize,
+      camera: state.camera,
+      objectSize: Size(object.width, object.height),
+      objects: objects,
+      scene: state.scene,
     );
+
+    object.applyBounds(
+      Rect.fromLTWH(pos.dx, pos.dy, object.width, object.height),
+    );
+
     objects.add(object);
     state.selectedObject = object;
     notifyListeners();
+  }
+
+  void addBlock() {
+    addObject(
+      BlockModel(
+        id: _ids.next('block'),
+        x: 0,
+        y: 0,
+        width: 180,
+        height: 160,
+      ),
+    );
   }
 
   void addRamp() {
-    final object = RampModel(
-      id: _ids.next('ramp'),
-      x: 520,
-      y: state.groundY - 180,
-      width: 220,
-      height: 160,
+    addObject(
+      RampModel(
+        id: _ids.next('ramp'),
+        x: 0,
+        y: 0,
+        width: 220,
+        height: 160,
+      ),
     );
-    objects.add(object);
-    state.selectedObject = object;
-    notifyListeners();
   }
 
   void addSphere() {
-    final object = SphereModel(
-      id: _ids.next('sphere'),
-      x: 860,
-      y: state.groundY - 150,
-      radius: 75,
+    addObject(
+      SphereModel(
+        id: _ids.next('sphere'),
+        x: 0,
+        y: 0,
+        radius: 75,
+      ),
     );
-    objects.add(object);
-    state.selectedObject = object;
+  }
+
+  void deleteSelected() {
+    if (state.selectedObject == null) return;
+    objects.remove(state.selectedObject);
+    state.selectedObject = null;
     notifyListeners();
   }
 

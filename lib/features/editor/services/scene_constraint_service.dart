@@ -20,11 +20,11 @@ class SceneConstraintService {
       object.height,
     );
 
-    return _isValid(
-      object: object,
+    return isValidPlacement(
       candidate: candidate,
       scene: scene,
       objects: objects,
+      ignoreId: object.id,
     );
   }
 
@@ -34,19 +34,19 @@ class SceneConstraintService {
     required SceneModel scene,
     required List<DiagramObject> objects,
   }) {
-    return _isValid(
-      object: object,
+    return isValidPlacement(
       candidate: candidateBounds,
       scene: scene,
       objects: objects,
+      ignoreId: object.id,
     );
   }
 
-  bool _isValid({
-    required DiagramObject object,
+  bool isValidPlacement({
     required Rect candidate,
     required SceneModel scene,
     required List<DiagramObject> objects,
+    String? ignoreId,
   }) {
     if (!_insideWorld(candidate, scene)) {
       return false;
@@ -57,7 +57,7 @@ class SceneConstraintService {
     }
 
     for (final other in objects) {
-      if (other.id == object.id) continue;
+      if (other.id == ignoreId) continue;
 
       if (overlaps(candidate, other.bounds)) {
         return false;

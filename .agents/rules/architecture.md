@@ -1,3 +1,8 @@
+---
+trigger: always_on
+description: This
+---
+
 # Project Overview: Prueba Editor
 
 This project is a 2D interactive scene editor built with Flutter. It allows users to place, move, resize, and rotate various objects (Blocks, Ramps, and Spheres) on a canvas. The project uses a custom rendering engine based on Flutter's `CustomPainter`.
