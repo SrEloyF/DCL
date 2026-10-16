@@ -63,7 +63,7 @@ class EditorController extends ChangeNotifier {
     final pos = ObjectSpawnService.findSpawnPosition(
       viewportSize: _viewportSize,
       camera: state.camera,
-      objectSize: Size(object.width, object.height),
+      object: object,
       objects: objects,
       scene: state.scene,
     );
@@ -156,14 +156,40 @@ class EditorController extends ChangeNotifier {
   }
 
   void rotateObject(DiagramObject object, double deltaAngle) {
+    final nextAngle = object.angle + deltaAngle;
+    final allowed = _constraints.canRotate(
+      object: object,
+      candidateAngle: nextAngle,
+      scene: state.scene,
+      objects: objects,
+    );
+
+    if (!allowed) return;
+
     object.rotate(deltaAngle);
     notifyListeners();
   }
 
-  void flipObject(DiagramObject object) {
-    if (!object.canFlipX) return;
+  bool flipObject(DiagramObject object) {
+    if (!object.canFlipX) return false;
+
+    bool nextMirrored = true;
+    if (object is RampModel) {
+      nextMirrored = !object.mirrored;
+    }
+
+    final allowed = _constraints.canFlip(
+      object: object,
+      candidateMirrored: nextMirrored,
+      scene: state.scene,
+      objects: objects,
+    );
+
+    if (!allowed) return false;
+
     object.flipX();
     notifyListeners();
+    return true;
   }
 
   /*void _clampToScene(DiagramObject object) {
@@ -175,6 +201,14 @@ class EditorController extends ChangeNotifier {
   }*/
 
   void setObjectAngle(DiagramObject object, double angle) {
+    final allowed = _constraints.canRotate(
+      object: object,
+      candidateAngle: angle,
+      scene: state.scene,
+      objects: objects,
+    );
+    if (!allowed) return;
+
     object.angle = angle;
     notifyListeners();
   }

@@ -132,7 +132,15 @@ class _ObjectOverlayState extends State<ObjectOverlay> {
         },
         onTap: handle.type == HandleType.flip
             ? () {
-                widget.controller.flipObject(object);
+                final success = widget.controller.flipObject(object);
+                if (!success && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('No hay espacio para reflejar el objeto.'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
               }
             : null,
         child: HandleWidget(type: handle.type, anchor: handle.anchor),

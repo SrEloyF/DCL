@@ -10,10 +10,11 @@ class ObjectSpawnService {
   static Offset findSpawnPosition({
     required Size viewportSize,
     required CameraModel camera,
-    required Size objectSize,
+    required DiagramObject object,
     required List<DiagramObject> objects,
     required SceneModel scene,
   }) {
+    final objectSize = Size(object.width, object.height);
     // Step 1: Compute screen center
     final screenCenter = Offset(viewportSize.width / 2, viewportSize.height / 2);
 
@@ -40,7 +41,8 @@ class ObjectSpawnService {
         );
 
         if (constraintService.isValidPlacement(
-          candidate: candidate,
+          candidateObject: object,
+          candidateBounds: candidate,
           scene: scene,
           objects: objects,
         )) {
@@ -62,7 +64,8 @@ class ObjectSpawnService {
         );
 
         if (constraintService.isValidPlacement(
-          candidate: candidate,
+          candidateObject: object,
+          candidateBounds: candidate,
           scene: scene,
           objects: objects,
         )) {

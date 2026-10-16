@@ -21,7 +21,8 @@ class SceneConstraintService {
     );
 
     return isValidPlacement(
-      candidate: candidate,
+      candidateObject: object,
+      candidateBounds: candidate,
       scene: scene,
       objects: objects,
       ignoreId: object.id,
@@ -35,7 +36,40 @@ class SceneConstraintService {
     required List<DiagramObject> objects,
   }) {
     return isValidPlacement(
-      candidate: candidateBounds,
+      candidateObject: object,
+      candidateBounds: candidateBounds,
+      scene: scene,
+      objects: objects,
+      ignoreId: object.id,
+    );
+  }
+
+  bool canRotate({
+    required DiagramObject object,
+    required double candidateAngle,
+    required SceneModel scene,
+    required List<DiagramObject> objects,
+  }) {
+    return isValidPlacement(
+      candidateObject: object,
+      candidateBounds: object.bounds,
+      candidateAngle: candidateAngle,
+      scene: scene,
+      objects: objects,
+      ignoreId: object.id,
+    );
+  }
+
+  bool canFlip({
+    required DiagramObject object,
+    required bool candidateMirrored,
+    required SceneModel scene,
+    required List<DiagramObject> objects,
+  }) {
+    return isValidPlacement(
+      candidateObject: object,
+      candidateBounds: object.bounds,
+      candidateMirrored: candidateMirrored,
       scene: scene,
       objects: objects,
       ignoreId: object.id,
@@ -43,23 +77,29 @@ class SceneConstraintService {
   }
 
   bool isValidPlacement({
-    required Rect candidate,
+    required DiagramObject candidateObject,
+    required Rect candidateBounds,
+    double? candidateAngle,
+    bool? candidateMirrored,
     required SceneModel scene,
     required List<DiagramObject> objects,
     String? ignoreId,
   }) {
-    if (!_insideWorld(candidate, scene)) {
+    final shape = getShapeFromObject(candidateObject, candidateBounds, candidateAngle, candidateMirrored);
+    final actualBounds = getShapeBounds(shape);
+
+    if (!_insideWorld(actualBounds, scene)) {
       return false;
     }
 
-    if (!_aboveGround(candidate, scene)) {
+    if (!_aboveGround(actualBounds, scene)) {
       return false;
     }
 
     for (final other in objects) {
       if (other.id == ignoreId) continue;
 
-      if (overlaps(candidate, other.bounds)) {
+      if (checkCollision(candidateObject, candidateBounds, other, other.bounds, candidateAngleA: candidateAngle, candidateMirroredA: candidateMirrored)) {
         return false;
       }
     }
